@@ -21,6 +21,7 @@
 #include <string.h>   // Para strlen()
 #include <stdio.h>    // Para sprintf()
 #include "math.h"
+#include <stdbool.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -109,7 +110,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
-  //int fake_value = 0;
+  int sim_value = 0;
+  bool Simulacion = false; //true para simular, false para obtener datos del puerto ADC
 
   HAL_Init();
   SystemClock_Config();
@@ -125,26 +127,31 @@ int main(void)
   {
     /* USER CODE END WHILE */
 
+
+	  if(Simulacion){
       //Datos Simulados Onda seno
-      /*
 	  static float angle = 0;
-      fake_value = (uint16_t)((sin(angle) + 1.0f) * 2047);  // 0-4095
-      angle += 0.1f;
+      sim_value = (uint16_t)((sin(angle) + 1.0f) * 2047);  // 0-4095
+      angle += 0.025f;
 
       char buffer[16];
-      sprintf(buffer, "%u\n", fake_value);  // convierte el número en texto + newline
+      sprintf(buffer, "%u\n", sim_value);  // convierte el número en texto + newline
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
       HAL_Delay(10);
-      */
-      //Datos de ADC de la tarjeta
-        HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-        adcValue = HAL_ADC_GetValue(&hadc1);
+	  }
+	  else{
+	  //Datos de ADC de la tarjeta
+	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+	  adcValue = HAL_ADC_GetValue(&hadc1);
 
-        // Enviar por UART
-        sprintf(buffer, "ADC:%lu\n", adcValue);
-        HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+	  // Enviar por UART
+	  sprintf(buffer, "%lu\n", adcValue);
+	  HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+	  //HAL_Delay(10); // Envía cada 200 ms
 
-        //HAL_Delay(10); // Envía cada 200 ms
+	  }
+
+
 
     /* USER CODE BEGIN 3 */
   }
