@@ -26,6 +26,18 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
+
+typedef enum {
+  WAVE_SINE = 0,
+  WAVE_SQUARE,
+  WAVE_TRIANGLE,
+  WAVE_SAWTOOTH
+} WaveformType;
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -112,6 +124,7 @@ int main(void)
   /* USER CODE END 2 */
   int sim_value = 0;
   bool Simulacion = false; //true para simular, false para obtener datos del puerto ADC
+  WaveformType signal_type = WAVE_SINE;  // Tipo de señal simulada
 
   HAL_Init();
   SystemClock_Config();
@@ -128,17 +141,41 @@ int main(void)
     /* USER CODE END WHILE */
 
 
-	  if(Simulacion){
-      //Datos Simulados Onda seno
-	  static float angle = 0;
-      sim_value = (uint16_t)((sin(angle) + 1.0f) * 2047);  // 0-4095
+          if(Simulacion){
+      static float angle = 0.0f;
+      switch(signal_type){
+      case WAVE_SQUARE:
+          sim_value = (angle < M_PI) ? 4095 : 0;
+          break;
+      case WAVE_TRIANGLE:
+          {
+            float t = fmodf(angle, 2.0f*M_PI)/(2.0f*M_PI);
+            if(t < 0.5f)
+              sim_value = (uint16_t)(t*2.0f*4095);
+            else
+              sim_value = (uint16_t)((1.0f - t)*2.0f*4095);
+          }
+          break;
+      case WAVE_SAWTOOTH:
+          {
+            float t = fmodf(angle, 2.0f*M_PI)/(2.0f*M_PI);
+            sim_value = (uint16_t)(t*4095);
+          }
+          break;
+      case WAVE_SINE:
+      default:
+          sim_value = (uint16_t)((sin(angle) + 1.0f) * 2047);
+          break;
+      }
+
       angle += 0.025f;
+      if(angle >= 2.0f*M_PI) angle -= 2.0f*M_PI;
 
       char buffer[16];
       sprintf(buffer, "%u\n", sim_value);  // convierte el número en texto + newline
       HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
       HAL_Delay(10);
-	  }
+          }
 	  else{
 	  //Datos de ADC de la tarjeta
 	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
