@@ -88,7 +88,8 @@ static void MX_USART1_UART_Init(void);
 extern ADC_HandleTypeDef hadc1;
 extern UART_HandleTypeDef huart2;
 
-uint32_t adcValue;
+uint32_t adcValue1;
+uint32_t adcValue2;
 char buffer[64];
 
 int main(void)
@@ -177,14 +178,16 @@ int main(void)
       HAL_Delay(10);
           }
 	  else{
-	  //Datos de ADC de la tarjeta
-	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-	  adcValue = HAL_ADC_GetValue(&hadc1);
+          // Datos de ADC de la tarjeta (dos canales)
+          HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+          adcValue1 = HAL_ADC_GetValue(&hadc1);
+          HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+          adcValue2 = HAL_ADC_GetValue(&hadc1);
 
-	  // Enviar por UART
-	  sprintf(buffer, "%lu\n", adcValue);
-	  HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
-	  //HAL_Delay(10); // Envía cada 200 ms
+          // Enviar por UART
+          sprintf(buffer, "%lu,%lu\n", adcValue1, adcValue2);
+          HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+          //HAL_Delay(10); // Envía cada 200 ms
 
 	  }
 
@@ -265,13 +268,13 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
+  hadc1.Init.NbrOfConversion = 2;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
@@ -297,6 +300,14 @@ static void MX_ADC1_Init(void)
   sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* Configure second regular channel */
+  sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Rank = ADC_REGULAR_RANK_2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
