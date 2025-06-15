@@ -201,7 +201,7 @@ int main(void)
           // Enviar por UART
           sprintf(buffer, "%lu,%lu\n", adcValue1, adcValue2);
           HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
-          //HAL_Delay(10); // Envía cada 200 ms
+          HAL_Delay(10); // Envía cada 200 ms
 
 	  }
 
