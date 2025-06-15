@@ -199,5 +199,15 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /* USER CODE BEGIN 1 */
+/**
+  * @brief This function handles external line[15:10] interrupts.
+  * En este proyecto se utiliza para leer el botón de usuario (B1)
+  * y alternar entre la señal simulada y la leídad del ADC.
+  */
+void EXTI15_10_IRQHandler(void)
+{
+  HAL_GPIO_EXTI_IRQHandler(B1_Pin);
+}
+
 
 /* USER CODE END 1 */
