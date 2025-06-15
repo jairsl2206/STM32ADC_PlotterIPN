@@ -128,7 +128,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
-  int nSenalesSimulacion = 2; // Número de señales simuladas simultáneas (2-4)
+  int nSenalesSimulacion = 4; // Número de señales simuladas simultáneas (2-4)
   WaveformType signal_types[4] = {WAVE_SINE, WAVE_SQUARE, WAVE_TRIANGLE, WAVE_SAWTOOTH};
   float angles[4] = {0};
 
