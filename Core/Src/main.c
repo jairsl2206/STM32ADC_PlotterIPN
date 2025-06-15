@@ -61,6 +61,11 @@ ADC_HandleTypeDef hadc1;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
+/* Flag que define si se envían datos simulados (true)
+   o valores capturados por el ADC (false).  Se modifica
+   desde la interrupción del botón de usuario. */
+volatile bool Simulacion = false;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -123,7 +128,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
-  bool Simulacion = false; //true para simular, false para obtener datos del puerto ADC
   int nSenalesSimulacion = 2; // Número de señales simuladas simultáneas (2-4)
   WaveformType signal_types[4] = {WAVE_SINE, WAVE_SQUARE, WAVE_TRIANGLE, WAVE_SAWTOOTH};
   float angles[4] = {0};
@@ -425,6 +429,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
+  /* Configurar y habilitar la interrupción del botón de usuario */
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -438,6 +446,19 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+/**
+  * @brief Callback de la interrupción generada por el botón de usuario
+  *        Alterna la bandera 'Simulacion' para cambiar entre señal simulada
+  *        y lectura real del ADC.
+  */
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if (GPIO_Pin == B1_Pin)
+  {
+    Simulacion = !Simulacion;
+  }
+}
 
 /* USER CODE END 4 */
 
