@@ -123,9 +123,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
-  int sim_value = 0;
   bool Simulacion = false; //true para simular, false para obtener datos del puerto ADC
-  WaveformType signal_type = WAVE_SINE;  // Tipo de señal simulada
+  int nSenalesSimulacion = 2; // Número de señales simuladas simultáneas (2-4)
+  WaveformType signal_types[4] = {WAVE_SINE, WAVE_SQUARE, WAVE_TRIANGLE, WAVE_SAWTOOTH};
+  float angles[4] = {0};
 
   HAL_Init();
   SystemClock_Config();
@@ -143,38 +144,47 @@ int main(void)
 
 
           if(Simulacion){
-      static float angle = 0.0f;
-      switch(signal_type){
-      case WAVE_SQUARE:
-          sim_value = (angle < M_PI) ? 4095 : 0;
+      uint16_t sim_values[4] = {0};
+      for(int i = 0; i < nSenalesSimulacion && i < 4; i++){
+        switch(signal_types[i]){
+        case WAVE_SQUARE:
+          sim_values[i] = (angles[i] < M_PI) ? 4095 : 0;
           break;
-      case WAVE_TRIANGLE:
+        case WAVE_TRIANGLE:
           {
-            float t = fmodf(angle, 2.0f*M_PI)/(2.0f*M_PI);
+            float t = fmodf(angles[i], 2.0f*M_PI)/(2.0f*M_PI);
             if(t < 0.5f)
-              sim_value = (uint16_t)(t*2.0f*4095);
+              sim_values[i] = (uint16_t)(t*2.0f*4095);
             else
-              sim_value = (uint16_t)((1.0f - t)*2.0f*4095);
+              sim_values[i] = (uint16_t)((1.0f - t)*2.0f*4095);
           }
           break;
-      case WAVE_SAWTOOTH:
+        case WAVE_SAWTOOTH:
           {
-            float t = fmodf(angle, 2.0f*M_PI)/(2.0f*M_PI);
-            sim_value = (uint16_t)(t*4095);
+            float t = fmodf(angles[i], 2.0f*M_PI)/(2.0f*M_PI);
+            sim_values[i] = (uint16_t)(t*4095);
           }
           break;
-      case WAVE_SINE:
-      default:
-          sim_value = (uint16_t)((sin(angle) + 1.0f) * 2047);
+        case WAVE_SINE:
+        default:
+          sim_values[i] = (uint16_t)((sin(angles[i]) + 1.0f) * 2047);
           break;
+        }
+
+        angles[i] += 0.025f;
+        if(angles[i] >= 2.0f*M_PI) angles[i] -= 2.0f*M_PI;
       }
 
-      angle += 0.025f;
-      if(angle >= 2.0f*M_PI) angle -= 2.0f*M_PI;
-
-      char buffer[16];
-      sprintf(buffer, "%u\n", sim_value);  // convierte el número en texto + newline
-      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, strlen(buffer), HAL_MAX_DELAY);
+      char buffer[64];
+      int len = 0;
+      for(int i = 0; i < nSenalesSimulacion && i < 4; i++){
+        len += sprintf(buffer + len, "%u", sim_values[i]);
+        if(i < nSenalesSimulacion - 1)
+          buffer[len++] = ',';
+        else
+          buffer[len++] = '\n';
+      }
+      HAL_UART_Transmit(&huart2, (uint8_t*)buffer, len, HAL_MAX_DELAY);
       HAL_Delay(10);
           }
 	  else{
